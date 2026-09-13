@@ -24,8 +24,9 @@ Then ask Claude, for example: *"What's inside Downloads/report.zip? Is it safe t
 | `create_archive` · `diff_archives` · `test_archive` · `engine_info` | Create without secrets, compare, verify |
 
 - Everything runs **locally** on your PC. Files are never uploaded.
-- Access is limited to the folders you choose.
-- Safety benchmark: 26 crafted malicious or tricky archives — 26/26 flagged, 0 files written outside the target folder.
+- Access is limited to the folders you choose. Passwords never appear on a command line.
+- Two independent checks for ZIPs (the engine's view and the names actually stored in the file), nested archives up to two levels, overlapping-entry zip bombs, and a size watchdog during extraction.
+- Safety benchmark: 28 crafted malicious or tricky archives — 28/28 flagged, 0 files written outside the target folder.
 
 ## 한국어
 

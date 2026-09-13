@@ -3,7 +3,7 @@
   "name": "io.github.work517/archiveflow",
   "title": "ArchiveFlow",
   "description": "Inspect, search and safely extract zip/7z/rar/tar archives; repair garbled CJK file names.",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "repository": {
     "url": "https://github.com/work517/archiveflow-releases",
     "source": "github"
@@ -11,8 +11,8 @@
   "packages": [
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/work517/archiveflow-releases/releases/download/v0.2.1/archiveflow-0.2.1.mcpb",
-      "fileSha256": "5ba57c0fc71c779183302c9eed67833f1cad6536f824cb8a1678803b228d19e8",
+      "identifier": "https://github.com/work517/archiveflow-releases/releases/download/v0.3.0/archiveflow-0.3.0.mcpb",
+      "fileSha256": "731f08413ad2733775c9989bd2ba5da25c2aafe9b81ad5820e01e3188d02d9e1",
       "transport": {
         "type": "stdio"
       }
