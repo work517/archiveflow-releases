@@ -1,0 +1,16 @@
+ArchiveFlow — End User License (draft, pending legal review)
+
+Copyright (c) 2026 ArchiveFlow. All rights reserved.
+
+1. You may download, install and use the ArchiveFlow release files published in this
+   repository free of charge, for personal or business use.
+2. You may not redistribute, sell, sublicense, modify, decompile, or reverse engineer
+   ArchiveFlow, except to the extent applicable law expressly permits it or a
+   third-party license listed below grants you that right for its own component.
+3. ArchiveFlow is provided "as is", without warranty of any kind. The authors are not
+   liable for any damages arising from its use.
+
+Third-party components are licensed under their own terms, listed in
+THIRD_PARTY_NOTICES.txt inside each release package. In particular, 7-Zip is licensed
+under the GNU LGPL with the unRAR restriction; its source code is available at
+https://www.7-zip.org/ and its license is included as bin/License.txt.

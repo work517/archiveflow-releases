@@ -1,0 +1,39 @@
+name: Publish to MCP Registry
+
+# Runs when server.json changes (a new release was added) or manually.
+# GitHub OIDC grants the io.github.work517/* namespace — no secrets needed.
+on:
+  push:
+    branches: [main]
+    paths: ['server.json']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Verify the released .mcpb matches server.json
+        run: |
+          url=$(jq -r '.packages[0].identifier' server.json)
+          want=$(jq -r '.packages[0].fileSha256' server.json)
+          curl -fsSL "$url" -o package.mcpb
+          got=$(sha256sum package.mcpb | cut -d' ' -f1)
+          echo "url=$url"
+          echo "want=$want"
+          echo "got=$got"
+          test "$want" = "$got"
+
+      - name: Install mcp-publisher
+        run: curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+
+      - name: Log in (GitHub OIDC)
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish
+        run: ./mcp-publisher publish
