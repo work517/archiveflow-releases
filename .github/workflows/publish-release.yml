@@ -1,0 +1,116 @@
+name: Publish release
+
+# Makes the public release from the files already published on pullzip.download.
+#
+# The build lives in the private repository and cannot reach into this one, and this
+# repository cannot read the private repository's build artifacts. Rather than give either
+# side a token for the other, the handover happens through the site itself: the private CI
+# publishes the signed files plus a manifest of their SHA-256, and this workflow downloads
+# those public files, checks the hashes and releases them here.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish, e.g. 0.6.0'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark as a pre-release'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  SITE: https://pullzip.download
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.release.outputs.published }}
+    steps:
+      - uses: actions/checkout@v5
+        with: { ref: main }
+
+      - name: Download the published files and check them
+        id: fetch
+        run: |
+          set -euo pipefail
+          version='${{ inputs.version }}'
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::version must look like 0.6.0"; exit 1; }
+
+          curl -fsSL "$SITE/download/manifest.json" -o manifest.json
+          got=$(jq -r .version manifest.json)
+          if [ "$got" != "$version" ]; then
+            echo "::error::the site is serving $got, not $version — wait for the Cloudflare deploy of the release commit, then run this again"
+            exit 1
+          fi
+
+          mkdir -p assets
+          for name in $(jq -r '.files | keys[]' manifest.json); do
+            want=$(jq -r ".files[\"$name\"].sha256" manifest.json)
+            release=$(jq -r ".files[\"$name\"].releaseName" manifest.json)
+            curl -fsSL "$SITE/download/$name" -o "assets/$release"
+            got=$(sha256sum "assets/$release" | cut -d' ' -f1)
+            echo "$release  want=$want  got=$got"
+            # The hash is what makes this safe: the bytes came over the public internet, so
+            # they are only trusted because they match what the signing build recorded.
+            [ "$want" = "$got" ] || { echo "::error::$name does not match manifest.json"; exit 1; }
+          done
+          ls -l assets
+
+          mcpb=$(jq -r '.files["archiveflow.mcpb"].releaseName' manifest.json)
+          echo "mcpb=$mcpb" >> "$GITHUB_OUTPUT"
+          echo "mcpb_sha=$(jq -r '.files["archiveflow.mcpb"].sha256' manifest.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Create the release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version='${{ inputs.version }}'
+          if gh release view "v$version" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::notice::v$version already exists; uploading assets over it"
+            gh release upload "v$version" assets/* --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "v$version" assets/* \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "Pullzip $version" \
+              --notes "Windows installer, portable build and the AI extension (.mcpb). Every file is Microsoft code-signed as PROJECTTEAMFORYOU and is the same byte-for-byte as the one served from $SITE/download/. What changed: $SITE/updates/" \
+              ${{ inputs.prerelease && '--prerelease' || '' }}
+          fi
+          echo "published=true" >> "$GITHUB_OUTPUT"
+
+      # The registry entry points at the release asset, so it can only be written once the
+      # release exists — which is why this comes after.
+      - name: Point server.json at the new release
+        env:
+          MCPB: ${{ steps.fetch.outputs.mcpb }}
+          MCPB_SHA: ${{ steps.fetch.outputs.mcpb_sha }}
+        run: |
+          set -euo pipefail
+          version='${{ inputs.version }}'
+          url="https://github.com/$GITHUB_REPOSITORY/releases/download/v$version/$MCPB"
+          jq --arg v "$version" --arg url "$url" --arg sha "$MCPB_SHA" \
+            '.version = $v | .packages[0].identifier = $url | .packages[0].fileSha256 = $sha' \
+            server.json > server.json.new && mv server.json.new server.json
+          cat server.json
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add server.json
+          if git diff --cached --quiet; then
+            echo "::notice::server.json already points at this release"
+          else
+            git commit -m "Publish $version"
+            git push origin main
+          fi
+
+  registry:
+    needs: publish
+    uses: ./.github/workflows/publish-mcp.yml
+    permissions:
+      contents: read
+      id-token: write

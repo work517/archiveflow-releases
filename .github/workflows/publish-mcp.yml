@@ -7,6 +7,10 @@ on:
     branches: [main]
     paths: ['server.json']
   workflow_dispatch:
+  # Called by publish-release.yml right after it commits a new server.json. A workflow that
+  # pushes with GITHUB_TOKEN does not set off another workflow, so the push trigger above
+  # never fires for it — it has to call this one.
+  workflow_call:
 
 permissions:
   contents: read
@@ -17,6 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Always the branch tip: when called from publish-release.yml the run started
+          # before that workflow committed the new server.json.
+          ref: main
 
       - name: Verify the released .mcpb matches server.json
         run: |
