@@ -3,7 +3,7 @@
   "name": "io.github.work517/archiveflow",
   "title": "Pullzip",
   "description": "Inspect, search and safely extract zip/7z/rar/tar archives; repair garbled CJK file names.",
-  "version": "0.8.10",
+  "version": "0.8.11",
   "repository": {
     "url": "https://github.com/work517/archiveflow-releases",
     "source": "github"
@@ -11,8 +11,8 @@
   "packages": [
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/work517/archiveflow-releases/releases/download/v0.8.10/archiveflow-0.8.10.mcpb",
-      "fileSha256": "6d96265b593c9ddd276fd3221cf6387f1f193c02a180d8254955b7ae4bf8c1dc",
+      "identifier": "https://github.com/work517/archiveflow-releases/releases/download/v0.8.11/archiveflow-0.8.11.mcpb",
+      "fileSha256": "74cdd7f2d0bb917137091f0df7e683392dbbff802179c23efc4be881c59505dc",
       "transport": {
         "type": "stdio"
       }
